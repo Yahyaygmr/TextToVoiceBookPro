@@ -1,0 +1,47 @@
+@model IEnumerable<SesAPI.Models.Book>
+@{
+    ViewData["Title"] = "Kitaplar";
+}
+<div class="container mt-5">
+    <h2>Yüklenen Kitaplar</h2>
+    @if (ViewData["Message"] != null)
+    {
+        <div class="alert alert-info">@ViewData["Message"]</div>
+    }
+    <a class="btn btn-primary mb-3" href="@Url.Action("Upload")">Yeni Kitap Yükle</a>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="table-light">
+                <tr>
+                    <th>Başlık</th>
+                    <th>Yazar</th>
+                    <th>Eklenme Tarihi</th>
+                    <th>PDF</th>
+                    <th>Ses Dosyası</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Title</td>
+                    <td>@item.Author</td>
+                    <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.PdfFilePath))
+                        {
+                            <a href="/@item.PdfFilePath" target="_blank">PDF</a>
+                        }
+                    </td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.AudioFilePath))
+                        {
+                            <audio controls src="/@item.AudioFilePath"></audio>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div> 

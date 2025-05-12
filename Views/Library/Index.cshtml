@@ -1,0 +1,36 @@
+@model IEnumerable<SesAPI.Models.Book>
+@{
+    ViewData["Title"] = "Kütüphane";
+}
+<div class="container mt-5">
+    <h2>Kütüphane</h2>
+    <div class="row">
+        @foreach (var book in Model)
+        {
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@book.Title</h5>
+                        <p class="card-text text-muted">@book.Author</p>
+                        <button class="btn btn-primary mt-auto w-100" type="button" data-bs-toggle="collapse" data-bs-target="#audio-@book.Id" aria-expanded="false" aria-controls="audio-@book.Id">
+                            Dinle
+                        </button>
+                        <div class="collapse mt-3" id="audio-@book.Id">
+                            @if (!string.IsNullOrEmpty(book.AudioFilePath))
+                            {
+                                <audio controls class="w-100">
+                                    <source src="/@book.AudioFilePath" type="audio/wav" />
+                                    Tarayıcınız audio etiketini desteklemiyor.
+                                </audio>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning">Ses dosyası bulunamadı.</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div> 

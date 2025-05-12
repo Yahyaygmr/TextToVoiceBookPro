@@ -1,0 +1,130 @@
+@model IEnumerable<SesAPI.Controllers.BookViewModel>
+@{
+    ViewData["Title"] = "Kitaplar";
+}
+<style>
+    .audio-player {
+        width: 300px;
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .audio-player audio {
+        width: 100%;
+    }
+    .book-card {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .book-title {
+        color: #2c3e50;
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    .book-author {
+        color: #7f8c8d;
+        font-style: italic;
+        margin-bottom: 15px;
+    }
+    .book-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .progress-badge {
+        background: #e74c3c;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        margin-left: 10px;
+    }
+    .progress-badge.completed {
+        background: #27ae60;
+    }
+</style>
+
+<h2>Kitaplar</h2>
+<div class="row">
+    @foreach (var item in Model)
+    {
+        var audioFile = $"/audio/{System.IO.Path.GetFileNameWithoutExtension(item.FilePath)}.wav";
+        <div class="col-md-6 col-lg-4">
+            <div class="book-card">
+                <div class="book-title">
+                    @item.Title
+                    @if (item.Progress != null)
+                    {
+                        <span class="progress-badge @(item.Progress.IsCompleted ? "completed" : "")">
+                            @(item.Progress.IsCompleted ? "Tamamlandı" : "Devam Ediyor")
+                        </span>
+                    }
+                </div>
+                <div class="book-author">@item.Author</div>
+                <div class="book-actions">
+                    <a href="/pdf/@System.IO.Path.GetFileName(item.FilePath)" target="_blank" class="btn btn-primary btn-sm">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </a>
+                    <div class="audio-player">
+                        <audio controls preload="none" data-book-id="@item.Id">
+                            <source src="@audioFile" type="audio/wav" />
+                            Tarayıcınız ses etiketini desteklemiyor.
+                        </audio>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Ses dosyası yüklenirken loading göstergesi
+        document.querySelectorAll('audio').forEach(audio => {
+            audio.addEventListener('loadstart', function() {
+                this.parentElement.classList.add('loading');
+            });
+            audio.addEventListener('canplay', function() {
+                this.parentElement.classList.remove('loading');
+            });
+
+            // İlerleme durumunu kaydet
+            audio.addEventListener('timeupdate', function() {
+                const bookId = this.dataset.bookId;
+                const position = this.currentTime;
+                const isCompleted = this.currentTime >= this.duration - 1; // Son 1 saniyeye gelince tamamlandı say
+
+                // Her 5 saniyede bir veya tamamlandığında kaydet
+                if (isCompleted || Math.floor(position) % 5 === 0) {
+                    fetch('/UserBooks/UpdateProgress', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            bookId: bookId,
+                            position: position,
+                            isCompleted: isCompleted
+                        })
+                    });
+                }
+            });
+
+            // Sayfa yüklendiğinde son kaldığı yerden başlat
+            audio.addEventListener('loadedmetadata', function() {
+                const bookId = this.dataset.bookId;
+                const progress = @Html.Raw(Json.Serialize(Model));
+                const bookProgress = progress.find(b => b.id === parseInt(bookId))?.progress;
+                
+                if (bookProgress && bookProgress.lastPosition > 0) {
+                    this.currentTime = bookProgress.lastPosition;
+                }
+            });
+        });
+    </script>
+} 
