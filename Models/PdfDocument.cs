@@ -13,9 +13,7 @@ namespace SesAPI.Models
         [Required]
         public string Author { get; set; }
 
-        [Required]
-        public string FilePath { get; set; }
-
+    
         public DateTime UploadDate { get; set; }
 
         public string UploadedBy { get; set; }
